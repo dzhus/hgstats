@@ -306,14 +306,25 @@ def make_stats_line(item, line_sep='\n', field_sep='\t'):
     """Prepare writable line from `StatsItem` instance."""
     return field_sep.join([item.x_label, item.y_label]) + line_sep
 
-def write_stats(stream,file_name='stats'):
-    stats_file = open(file_name, 'w')
+def get_repo_name(repo):
+    from os.path import basename
+    return basename(repo.root)
+
+def header_line(repo, stream):
+    return "# Stats for %s from %s" % (get_repo_name(repo), stream)
+
+def write_stats(repo, stream, file_name=None, append=None, line_sep='\n', field_sep='\t'):
+    if not file_name:
+        file_name = "stats-%s-%s" % (get_repo_name(repo), stream)
+    stats_file = open(file_name, append and 'a+' or 'w')
+    stats_file.write(header_line(repo, stream) + line_sep)
     # I don't use writelines intentionally
     for chunk in stream:
         stats_file.write(make_stats_line(chunk))
     stats_file.close()
+    return file_name
 
 def print_stats(repo, stream, line_sep='\n'):
-    print "# Stats for %s from %s" % (repo.path, stream)
+    print header_line(repo, stream)
     for item in stream:
         print make_stats_line(item),
