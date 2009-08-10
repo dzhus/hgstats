@@ -131,7 +131,14 @@ class StreamFilter():
         # check that we apply filter to stream
         if not isinstance(stream, StatStream):
             raise IncompatibleFilter('%s may be applied to StatStream only' % self.__class__)
+        if hasattr(self, 'name'):
+            self.name += '|%' % self.__class__
+        else:
+            self.name = str(self.__class__)
         self.stream = stream
+
+    def __str__(self):
+        return self.name
 
 class RepoFilter(StreamFilter):
     """
@@ -308,6 +315,6 @@ def write_stats(stream,file_name='stats'):
     stats_file.close()
 
 def print_stats(repo, stream, line_sep='\n'):
-    print "# Stats for %s " % repo.path
+    print "# Stats for %s from %s" % (repo.path, stream)
     for item in stream:
         print make_stats_line(item),
