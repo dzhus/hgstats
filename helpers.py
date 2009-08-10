@@ -123,9 +123,9 @@ class RepoStream(StatStream):
 ## must return a StatStream instance upon calling.
 
 class StreamFilter():
-    "
+    """
     Base class for stream filters.
-    "
+    """
     def __init__(self, stream):
         # check that we apply filter to stream
         if not isinstance(stream, StatStream):
@@ -133,9 +133,9 @@ class StreamFilter():
         self.stream = stream
 
 class RepoFilter(StreamFilter):
-    "
+    """
     Base class for filters which work on `RepoStream` objects.
-    "
+    """
     def __init__(self, repo):
         StreamFilter.__init__(self, repo)
         # check that we may rely on ctx information in class methods
