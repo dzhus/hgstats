@@ -330,9 +330,9 @@ class DropFilter(StreamFilter, StatStream):
         self.target_stream = target_stream
 
     def __iter__(self):
+        target_data = iter(self.target_stream)
+        target_item = target_data.next()
         for item in self.stream:
-            target_data = iter(self.target_stream)
-            target_item = target_data.next()
             while not item.x == target_item.x:
                 try:
                     target_item = target_data.next()
