@@ -325,6 +325,10 @@ class DropFilter(StreamFilter, StatStream):
         - *: `stream` items;
         - o: `target_stream` items;
         - x: items produced by this filter.
+
+        We assume that if A precedes B in `stream`, then items with
+        the same ``x`` values in `target_stream` come in that order,
+        too.
         """
         StreamFilter.__init__(self, stream)
         self.target_stream = target_stream
