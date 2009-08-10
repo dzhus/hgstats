@@ -13,6 +13,9 @@ This code is subject to GNU General Public License version 2
 
 ## Exceptions
 
+class IncompatibleInput(BaseException):
+    pass
+
 class IncompatibleFilter(BaseException):
     pass
 
@@ -70,6 +73,9 @@ class CtxStatItem(StatItem):
 class StatStream():
     """
     Wraps iterables for further use in filters.
+
+    Filters which do not preserve change contexts must be derived from
+    this class.
     """
     def __init__(self, stream):
         """
@@ -84,39 +90,52 @@ class RepoStream(StatStream):
     """
     Stream of change contexts in a repository, represented by
     `CtxStatItem` instances.
+
+    Filters which preserve change contexts must be derived from this
+    class.
     """
     def __init__(self, stream):
         """
         Constructs new `RepoStream` instance by converting an existing
-        Mercurial repository or binding `CtxStatItem` objects produced
-        by filter.
+        Mercurial repository.
 
         `repo` must be a `mercurial.localrepo.localrepository`
-        instance or an iterable of `CtxStatItem` objects.
+        instance.
 
-        In the former case, iterating over the created instance will
-        produce `CtxStatItem` objects with changeset dates as ``x``
-        and ``y`` equal to 1. This may be considered a line of *beats*
-        in repository history.
+        Iterating over the created instance will yield `CtxStatItem`
+        objects with changeset dates for ``x`` and 1's for ``y``.
+        This may be considered a line of *beats* in repository
+        history.
         """
         StatStream.__init__(self, stream)
+        if not isinstance(stream, localrepository):
+            raise IncompatibleInput("Can't create RepoStream from non-repo")
 
     def __iter__(self):
-        if isinstance(self.stream, localrepository):
-            for rev in self.stream:
-                ctx = self.stream[rev]
-                yield CtxStatItem(ctx, x=ctx.date()[0], y=1)
-        else:
-            for item in self.stream:
-                # assert(isinstance(item, CtxStatItem))
-                yield item
+        for rev in self.stream:
+            ctx = self.stream[rev]
+            yield CtxStatItem(ctx, x=ctx.date()[0], y=1)
 
     def __len__(self):
         return len(self.stream)
 
-## Filters transform streams, producing another streams
+    def __str__(self):
+        return get_repo_name(self.stream)
 
-class StreamFilter(StatStream):
+## Filters transform streams, producing another streams
+##
+## By convention, all filter classes except StreamFilter and
+## RepoFilter must be inherited from two classes:
+##
+## - first, RepoFilter or StreamFilter; this reflects whether we
+##   assume filter input to have changeset context data or not;
+##   
+## - second, StatStream or RepoStream; this reflects whether context
+##   data is preserved by filter.
+##
+## This is done to maintain filter compatibility checking.
+
+class StreamFilter():
     """
     Base class for stream filters.
     """
@@ -135,7 +154,8 @@ class StreamFilter(StatStream):
 
 class RepoFilter(StreamFilter):
     """
-    Base class for filters which work on `RepoStream` objects.
+    Deriving filters from this class makes them fail when applied to
+    streams without changeset context data.
     """
     def __init__(self, repo):
         StreamFilter.__init__(self, repo)
@@ -143,7 +163,7 @@ class RepoFilter(StreamFilter):
         if not isinstance(repo, RepoStream):
             raise IncompatibleFilter('%s may be applied to RepoStream only' % self.__class__)
 
-class AccFilter(StreamFilter):
+class AccFilter(StreamFilter, StatStream):
     """
     Accumulates ``y`` values.
     """
@@ -153,7 +173,7 @@ class AccFilter(StreamFilter):
             state += item.y
             yield StatItem(x=item.x, y=state)
         
-class GroupingFilter(RepoFilter):
+class GroupingFilter(RepoFilter, StatStream):
     """
     Combines changesets from `RepoStream` in groups by dates,
     producing a `StatStream` object. Size of group will be set as
@@ -221,7 +241,7 @@ class GroupingFilter(RepoFilter):
 
             cur_date += delta
 
-class TagsFilter(RepoFilter):
+class TagsFilter(RepoFilter, RepoStream):
     """
     Filters out non-tagged changesets.
 
@@ -233,7 +253,7 @@ class TagsFilter(RepoFilter):
                 yield item
 
 
-class DiffstatFilter(RepoFilter):
+class DiffstatFilter(RepoFilter, StatStream):
     """
     Sets amount of lines changed since last commit as ``y`` values.
     """
@@ -252,7 +272,7 @@ class DiffstatFilter(RepoFilter):
                 yield CtxStatItem(ctx, x=ctx.date()[0], y=line_changes)
             previous_ctx = ctx
 
-class DropFilter(StreamFilter):
+class DropFilter(StreamFilter, StatStream):
     """
     Sets ``y`` values of items in one stream equal to those in another
     one.
