@@ -196,7 +196,7 @@ class TagsFilter(RepoFilter):
     "Filters out non-tagged changesets."
     def __iter__(self):
         for item in self.stream:
-            if item.ctx.tags():
+            if item.ctx.tags() and not item.ctx.tags() == ['tip']:
                 yield item
 
 
