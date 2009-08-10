@@ -11,12 +11,6 @@ Copyright (C) 2009 Dmitry Dzhus <dima@sphinx.net.ru>
 This code is subject to GNU General Public License version 2
 """
 
-## Various functions
-
-def get_repo_name(repo):
-    from os.path import split
-    return split(split(repo.path)[0])[1]
-
 ## Exceptions
 
 class IncompatibleFilter(BaseException):
