@@ -102,7 +102,8 @@ class RepoStream(StatStream):
 
         In the former case, iterating over the created instance will
         produce `CtxStatItem` objects with changeset dates as ``x``
-        and revision numbers as ``y``.
+        and ``y`` equal to 1. This may be considered a line of *beats*
+        in repository history.
         """
         StatStream.__init__(self, stream)
 
@@ -110,7 +111,7 @@ class RepoStream(StatStream):
         if isinstance(self.stream, localrepository):
             for rev in self.stream:
                 ctx = self.stream[rev]
-                yield CtxStatItem(ctx, x=ctx.date()[0], y=ctx.rev())
+                yield CtxStatItem(ctx, x=ctx.date()[0], y=1)
         else:
             for item in self.stream:
                 # assert(isinstance(item, CtxStatItem))
@@ -142,6 +143,16 @@ class RepoFilter(StreamFilter):
         if not isinstance(repo, RepoStream):
             raise IncompatibleFilter('%s may be applied to RepoStream only' % self.__class__)
 
+class AccFilter(StreamFilter):
+    """
+    Accumulates ``y`` values.
+    """
+    def __iter__(self):
+        state = 0
+        for item in self.stream:
+            state += item.y
+            yield StatItem(x=item.x, y=state)
+        
 class GroupingFilter(RepoFilter):
     """
     Combines changesets from `RepoStream` in groups by dates,
@@ -238,8 +249,7 @@ class DiffstatFilter(RepoFilter):
                 lines = p.split('\n')
                 filestats = map(lambda t: t[1] + t[2], patch.diffstatdata(lines))
                 line_changes = sum(filestats)
-                yield CtxStatItem(ctx, x=ctx.date()[0], y=line_changes,
-                                  y_label=item.y_label)
+                yield CtxStatItem(ctx, x=ctx.date()[0], y=line_changes)
             previous_ctx = ctx
 
 class DropFilter(StreamFilter):
@@ -249,8 +259,8 @@ class DropFilter(StreamFilter):
     """
     def __init__(self, stream, target_stream):
         """
-        Contruct a new DropFilter instance which will make ``y``
-        attributes of ``StatItem`` objects in `stream` equal to those
+        Contruct a new `DropFilter` instance which will make ``y``
+        attributes of `StatItem` objects in `stream` equal to those
         of items in `target_stream` which have the same ``x``
         attribute value.
 
