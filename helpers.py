@@ -46,6 +46,21 @@ class StatItem():
     def __repr__(self):
         return '(%d,%d)' % (self.x, self.y)
 
+    def _copy_dic(self):
+        return {'x': self.x,
+                'y': self.y,
+                'x_label': self.x_label,
+                'y_label': self.y_label}
+
+    def child(self, **kwargs):
+        """
+        Return a full copy of `StatItem` instance with data attributes
+        redefined according to `kwargs`.
+        """
+        d = self._copy_dic()
+        d.update(**kwargs)
+        return self.__class__(**d)
+
 class CtxStatItem(StatItem):
     """
     Wraps change context in a `StatItem` instance.
@@ -65,6 +80,11 @@ class CtxStatItem(StatItem):
         self.ctx = ctx
         self.datetime = datetime.datetime.fromtimestamp(ctx.date()[0])
 
+    def _copy_dic(self):
+        d = StatItem._copy_dic(self)
+        d['ctx'] = self.ctx
+        return d
+    
     def __repr__(self):
         return '%s (%d,%d)' % (str(self.ctx), self.x, self.y)
 
@@ -168,16 +188,16 @@ class AccFilter(StreamFilter, StatStream):
     Accumulates ``y`` values.
     """
     def __iter__(self):
-        state = 0
+        acc = 0
         for item in self.stream:
-            state += item.y
-            yield StatItem(x=item.x, y=state)
+            acc += item.y
+            # Specify y_label because it will derive from current item
+            # otherwise
+            yield item.child(y = acc, y_label=None)
         
-class GroupingFilter(RepoFilter, StatStream):
+class GroupingFilter(RepoFilter, RepoStream):
     """
-    Combines changesets from `RepoStream` in groups by dates,
-    producing a `StatStream` object. Size of group will be set as
-    ``y`` attribute for every `StatItem` in the produced stream.
+    Combines changesets from `RepoStream` in groups by dates.
     """
     def __init__(self, repo, resolution=7, relax_days=7):
         """
@@ -185,16 +205,24 @@ class GroupingFilter(RepoFilter, StatStream):
         `CtxStatItem` objects from `repo` by equal timespans, as
         specified with `resolution` (in days).
 
-        `relax_days` is a beat relaxation time (in days).
-        `CtxStatItem` will be included in a group if its datetime is
-        not earlier that `relax_days` before the end of a time frame
-        for that group.
+        Iterating over the created instance will yield `StatItem`
+        objects with ``y`` attributes set to groups sizes.
+
+        `relax_days` is a beat relaxation time (in days). Original
+        stream item will be included in a group if its datetime is not
+        earlier that `relax_days` before the end of a time frame for
+        that group.
 
         ---[-------resolution=10-------]---
         ---[-----------[-relax_days=5-]]---
         ---[--o---o-----x--xxx--x------]---
 
-        Here only ``x`` commits will be included in the group.
+        Here only ``x`` commits will be included in the group, which
+        means that corresponding item in output stream will gain 5 as
+        ``y`` value.
+
+        Note that contexts are preserved only for the latest items of
+        each group.
         """
         RepoFilter.__init__(self, repo)
         self.resolution = resolution
@@ -269,7 +297,7 @@ class DiffstatFilter(RepoFilter, StatStream):
                 lines = p.split('\n')
                 filestats = map(lambda t: t[1] + t[2], patch.diffstatdata(lines))
                 line_changes = sum(filestats)
-                yield CtxStatItem(ctx, x=ctx.date()[0], y=line_changes)
+                yield item.child(x=ctx.date()[0], y=line_changes)
             previous_ctx = ctx
 
 class DropFilter(StreamFilter, StatStream):
@@ -311,8 +339,7 @@ class DropFilter(StreamFilter, StatStream):
                 except StopIteration:
                     raise UnsyncedStreams('%s does not contain item with x=%d'\
                                           % (self.target_stream, item.x))
-            yield StatItem(item.x, target_item.y,
-                           item.x_label, item.y_label)
+            yield item.child(y = target_item.y)
 
 ## Output routines
 
