@@ -260,9 +260,9 @@ class DropFilter(StreamFilter):
 
 ## Output routines
 
-def make_stats_line(item, line_sep='\n', field_sep='\n'):
+def make_stats_line(item, line_sep='\n', field_sep='\t'):
     """Prepare writable line from `StatsItem` instance."""
-    return field_sep.join([item.x_label, item.y_labely])) + line_sep
+    return field_sep.join([item.x_label, item.y_label]) + line_sep
 
 def write_stats(stream,file_name='stats'):
     stats_file = open(file_name, 'w')
