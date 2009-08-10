@@ -116,22 +116,22 @@ class RepoStream(StatStream):
 
 ## Filters transform streams, producing another streams
 
-class StreamFilter():
+class StreamFilter(StatStream):
     """
     Base class for stream filters.
     """
     def __init__(self, stream):
+        StatStream.__init__(self, stream)
         # Check that we apply filter to stream
         if not isinstance(stream, StatStream):
             raise IncompatibleFilter('%s may be applied to StatStream only' % self.__class__)
-        if hasattr(self, 'name'):
-            self.name += '|%' % self.__class__
-        else:
-            self.name = str(self.__class__)
-        self.stream = stream
 
     def __str__(self):
-        return self.name
+        """
+        Recursively query filter sequence for string representations
+        of its members, concatenating the result.
+        """
+        return '%s:%s' % (str(self.stream), self.__class__)
 
 class RepoFilter(StreamFilter):
     """
