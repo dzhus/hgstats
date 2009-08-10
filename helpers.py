@@ -24,6 +24,12 @@ class UnsyncedStreams(BaseException):
 
 ## Statistics items
 
+def std_x_label(item):
+    return str(item.x)
+
+def std_y_label(item):
+    return str(item.y)
+
 class StatItem():
     """
     Represents a single item in repository statistics.
@@ -35,16 +41,20 @@ class StatItem():
         for the item.
 
         If `y` is not specified, it's set to `x`. If `x_label` and
-        `y_label` are not specified, they're set to string
+        `y_label` are not specified, they're set to show string
         representations of `x` and `y`, repsectively.
+
+        `x_label` and `y_label` may be callables of one argument,
+        which will be the `StatItem` instance when printing labels.
         """
         self.x = x
         self.y = y
-        self.x_label = x_label or str(x)
-        self.y_label = y_label or str(y)
+        self.x_label = x_label or std_x_label
+        self.y_label = y_label or std_y_label
 
     def __repr__(self):
-        return '(%d,%d)' % (self.x, self.y)
+        return ' '.join(map(lambda l: callable(l) and l(self) or l,\
+                            [self.x_label, self.y_label]))
 
     def _copy_dic(self):
         return {'x': self.x,
@@ -84,9 +94,6 @@ class CtxStatItem(StatItem):
         d = StatItem._copy_dic(self)
         d['ctx'] = self.ctx
         return d
-    
-    def __repr__(self):
-        return '%s (%d,%d)' % (str(self.ctx), self.x, self.y)
 
 ## Streams form sequences of StatItems
 
@@ -347,9 +354,9 @@ class DropFilter(StreamFilter, StatStream):
 
 ## Output routines
 
-def make_stats_line(item, line_sep='\n', field_sep='\t'):
+def make_stats_line(item, line_sep='\n'):
     """Prepare writable line from `StatsItem` instance."""
-    return field_sep.join([item.x_label, item.y_label]) + line_sep
+    return str(item) + line_sep
 
 def get_repo_name(repo):
     from os.path import basename
