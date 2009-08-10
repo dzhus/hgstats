@@ -1,6 +1,7 @@
 import datetime
 
 from mercurial.localrepo import localrepository
+from mercurial import patch
 
 """
 Streams, filters and output methods for hgstats.
@@ -198,6 +199,27 @@ class TagsFilter(RepoFilter):
             if item.ctx.tags():
                 yield item
 
+
+class DiffstatFilter(RepoFilter):
+    """
+    Sets amount of lines changed since last commit as ``y`` values.
+    """
+    def __iter__(self):
+        # We can't assume that the whole changeset history is present
+        # in the stream, thus we keep track of what ctx was yielded
+        # last time, so we can diff current item against it.
+        previous_ctx = None
+        for item in self.stream:
+            ctx = item.ctx
+            if previous_ctx:
+                p = ''.join(patch.diff(ctx._repo, previous_ctx.node(), ctx.node()))
+                lines = p.split('\n')
+                filestats = map(lambda t: t[1] + t[2], patch.diffstatdata(lines))
+                line_changes = sum(filestats)
+                yield CtxStatItem(ctx, x=ctx.date()[0], y=line_changes,
+                                  y_label=item.y_label)
+            previous_ctx = ctx
+
 class DropFilter(StreamFilter):
     def __init__(self, stream, target_stream):
         """
@@ -238,9 +260,9 @@ class DropFilter(StreamFilter):
 
 ## Output routines
 
-def make_stats_line(item, line_sep='\n', field_sep=' '):
+def make_stats_line(item, line_sep='\n', field_sep='\n'):
     """Prepare writable line from `StatsItem` instance."""
-    return field_sep.join([item.x_label, item.y_label]) + line_sep
+    return field_sep.join([item.x_label, item.y_labely])) + line_sep
 
 def write_stats(stream,file_name='stats'):
     stats_file = open(file_name, 'w')
