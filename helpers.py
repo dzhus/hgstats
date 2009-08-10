@@ -54,6 +54,16 @@ class CtxStatItem(StatItem):
     Wraps change context in a `StatItem` instance.
     """
     def __init__(self, ctx, *args, **kwargs):
+        """
+        Construct a new `CtxStatItem` instance.
+
+        `ctx` must be an instance of `mercurial.context.changectx`
+        class and will be stored under ``ctx`` attribute. ``datetime``
+        attribute will be set to datetime object built from changeset
+        date.
+
+        `args` and `kwargs` are passed to `StatItem` constructor.
+        """
         StatItem.__init__(self, *args, **kwargs)
         self.ctx = ctx
         self.datetime = datetime.datetime.fromtimestamp(ctx.date()[0])
@@ -65,16 +75,13 @@ class CtxStatItem(StatItem):
 
 class StatStream():
     """
-    Wraps containters.
+    Wraps iterables for further use in filters.
     """
     def __init__(self, stream):
         """
         `stream` must be an iterable of `StatItem` objects.
         """
         self.stream = stream
-
-    def __getitem__(self, i):
-        return self.stream[i]
 
     def __iter__(self):
         return iter(self.stream)
@@ -86,7 +93,7 @@ class RepoStream(StatStream):
     """
     def __init__(self, stream):
         """
-        Constructs new RepoStream instance by converting an existing
+        Constructs new `RepoStream` instance by converting an existing
         Mercurial repository or binding `CtxStatItem` objects produced
         by filter.
 
@@ -94,8 +101,8 @@ class RepoStream(StatStream):
         instance or an iterable of `CtxStatItem` objects.
 
         In the former case, iterating over the created instance will
-        give `CtxStatItem` objects with changeset dates as ``x`` and
-        revision numbers as ``y``.
+        produce `CtxStatItem` objects with changeset dates as ``x``
+        and revision numbers as ``y``.
         """
         StatStream.__init__(self, stream)
 
@@ -116,6 +123,9 @@ class RepoStream(StatStream):
 ## must return a StatStream instance upon calling.
 
 class StreamFilter():
+    "
+    Base class for stream filters.
+    "
     def __init__(self, stream):
         # check that we apply filter to stream
         if not isinstance(stream, StatStream):
@@ -123,6 +133,9 @@ class StreamFilter():
         self.stream = stream
 
 class RepoFilter(StreamFilter):
+    "
+    Base class for filters which work on `RepoStream` objects.
+    "
     def __init__(self, repo):
         StreamFilter.__init__(self, repo)
         # check that we may rely on ctx information in class methods
@@ -130,10 +143,14 @@ class RepoFilter(StreamFilter):
             raise IncompatibleFilter('%s may be applied to RepoStream only' % self.__class__)
 
 class GroupingFilter(RepoFilter):
-    "Accepts RepoStream, produces StatStream."
+    """
+    Combines changesets from `RepoStream` in groups by dates,
+    producing a `StatStream` object. Size of group will be set as
+    ``y`` attribute for every `StatItem` in the produced stream.
+    """
     def __init__(self, repo, resolution=7, relax_days=7):
         """
-        Constructs a new GroupedStream instance which group
+        Constructs a new `GroupedStream` instance which groups
         `CtxStatItem` objects from `repo` by equal timespans, as
         specified with `resolution` (in days).
 
@@ -146,17 +163,18 @@ class GroupingFilter(RepoFilter):
         ---[-----------[-relax_days=5-]]---
         ---[--o---o-----x--xxx--x------]---
 
-        Here only ``x`` commits will be included in the group."""
+        Here only ``x`` commits will be included in the group.
+        """
         RepoFilter.__init__(self, repo)
         self.resolution = resolution
         self.relax_days = relax_days
 
     def __iter__(self):
         def not_too_old(up_to, delta):
-            """Make *filter* which will return True only for chunks which
-            are no earlier than `up_to-date_delta`"""
-            def test(chunk):
-                return chunk.datetime > (up_to - delta)
+            """Make *filter* which will return True only for contexts
+            which are no earlier than `up_to-date_delta`"""
+            def test(ctx):
+                return ctx.datetime > (up_to - delta)
             return test
 
         def snap_date(date):
@@ -193,7 +211,11 @@ class GroupingFilter(RepoFilter):
             cur_date += delta
 
 class TagsFilter(RepoFilter):
-    "Filters out non-tagged changesets."
+    """
+    Filters out non-tagged changesets.
+
+    ``tip`` tag is not included.
+    """
     def __iter__(self):
         for item in self.stream:
             if item.ctx.tags() and not item.ctx.tags() == ['tip']:
@@ -221,6 +243,10 @@ class DiffstatFilter(RepoFilter):
             previous_ctx = ctx
 
 class DropFilter(StreamFilter):
+    """
+    Sets ``y`` values of items in one stream equal to those in another
+    one.
+    """
     def __init__(self, stream, target_stream):
         """
         Contruct a new DropFilter instance which will make ``y``
@@ -228,19 +254,19 @@ class DropFilter(StreamFilter):
         of items in `target_stream` which have the same ``x``
         attribute value.
 
-                               o
-                            .    |
-                          .. .   |
-                 o    .x..    . .x
-                 |  .. |       .  ....
-                 x..   o
-                ..
-        ..  ....
-          ..
+                                 o
+                            *     
+                          ** *    
+                 o    *x**    * *x
+                    **         *  ****
+                 x**   o
+                **
+        **  ****
+          **
 
-        . - `stream` items
-        o - `target_stream` items
-        x - items produced by this filter
+        - *: `stream` items;
+        - o: `target_stream` items;
+        - x: items produced by this filter.
         """
         StreamFilter.__init__(self, stream)
         self.target_stream = target_stream
