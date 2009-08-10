@@ -120,15 +120,14 @@ class RepoStream(StatStream):
     def __len__(self):
         return len(self.stream)
 
-## Filters transform streams, producing another streams. Every filter
-## must return a StatStream instance upon calling.
+## Filters transform streams, producing another streams
 
 class StreamFilter():
     """
     Base class for stream filters.
     """
     def __init__(self, stream):
-        # check that we apply filter to stream
+        # Check that we apply filter to stream
         if not isinstance(stream, StatStream):
             raise IncompatibleFilter('%s may be applied to StatStream only' % self.__class__)
         if hasattr(self, 'name'):
@@ -146,7 +145,7 @@ class RepoFilter(StreamFilter):
     """
     def __init__(self, repo):
         StreamFilter.__init__(self, repo)
-        # check that we may rely on ctx information in class methods
+        # Check that we may rely on ctx information in class methods
         if not isinstance(repo, RepoStream):
             raise IncompatibleFilter('%s may be applied to RepoStream only' % self.__class__)
 
