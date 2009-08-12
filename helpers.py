@@ -290,22 +290,43 @@ class TagsFilter(RepoFilter, RepoStream):
 
 class DiffstatFilter(RepoFilter, StatStream):
     """
-    Sets amount of lines changed since last commit as ``y`` values.
+    Sets diffstat results as ``y`` values.
     """
+    def __init__(self, stream, show_delta=False):
+        """
+        Construct new `DiffstatFilter` instance for `stream`.
+
+        If `show_delta` if False, ``y`` of produced items is set to
+        sum of lines added and lines removed since previous item.
+        Otherwise, difference between these two values is used
+        instead.
+
+        For example, if 15 lines were added and 6 removed between
+        items, 15+6=21 will be used in case `show_delta` is True and
+        15-6=9 otherwise.
+
+        For the first item of `stream`, nothing is produced.
+        """
+        RepoFilter.__init__(self, stream)
+        if show_delta:
+            self.delta_function = lambda t: t[1] - t[2]
+        else:
+            self.delta_function = lambda t: t[1] + t[2]
+        self.show_delta = show_delta
+
     def __iter__(self):
         # We can't assume that the whole changeset history is present
         # in the stream, thus we keep track of what ctx was yielded
         # last time, so we can diff current item against it.
-        previous_ctx = None
-        for item in self.stream:
+        data = iter(self.stream)
+        prev_node = data.next().ctx.node()
+        for item in data:
             ctx = item.ctx
-            if previous_ctx:
-                p = ''.join(patch.diff(ctx._repo, previous_ctx.node(), ctx.node()))
-                lines = p.split('\n')
-                filestats = map(lambda t: t[1] + t[2], patch.diffstatdata(lines))
-                line_changes = sum(filestats)
-                yield item.child(x=ctx.date()[0], y=line_changes)
-            previous_ctx = ctx
+            p = ''.join(patch.diff(ctx._repo, prev_node, ctx.node()))
+            lines = p.split('\n')
+            stats = sum(map(self.delta_function, patch.diffstatdata(lines)))
+            yield item.child(x=ctx.date()[0], y=stats)
+            prev_node = ctx.node()
 
 class DropFilter(StreamFilter, StatStream):
     """
