@@ -292,7 +292,7 @@ class DiffstatFilter(RepoFilter, StatStream):
     """
     Sets diffstat results as ``y`` values.
     """
-    def __init__(self, stream, show_delta=False):
+    def __init__(self, stream, show_delta=False, include_initial=True):
         """
         Construct new `DiffstatFilter` instance for `stream`.
 
@@ -305,7 +305,13 @@ class DiffstatFilter(RepoFilter, StatStream):
         items, 15+6=21 will be used in case `show_delta` is True and
         15-6=9 otherwise.
 
-        For the first item of `stream`, nothing is produced.
+        For the first item of `stream`, nothing is produced unless
+        it's context has revision 0 and `include_initial` is True, in
+        which case the difference between 0 and null revision is used.
+
+        If `AccFilter` is applied after this one when `show_delta` is
+        True, a stream of total repository sizes (in lines) will be
+        produced.
         """
         RepoFilter.__init__(self, stream)
         if show_delta:
@@ -313,13 +319,18 @@ class DiffstatFilter(RepoFilter, StatStream):
         else:
             self.delta_function = lambda t: t[1] + t[2]
         self.show_delta = show_delta
+        self.include_initial = include_initial
 
     def __iter__(self):
         # We can't assume that the whole changeset history is present
         # in the stream, thus we keep track of what ctx was yielded
         # last time, so we can diff current item against it.
         data = iter(self.stream)
-        prev_node = data.next().ctx.node()
+        first = data.next()
+        if first.ctx.rev() == 0 and self.include_initial:
+            prev_node = first.ctx.p1().node()
+        else:
+            prev_node = first.ctx.node()
         for item in data:
             ctx = item.ctx
             p = ''.join(patch.diff(ctx._repo, prev_node, ctx.node()))
