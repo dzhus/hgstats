@@ -33,8 +33,8 @@ Author and licensing
 
 Copyright (C) 2009 Dmitry Dzhus <dima@sphinx.net.ru>
 
-This package is subject to GNU GPL version 3 license, as can be read
-on http://www.gnu.org/licenses/gpl-2.0.html.
+This code is subject to GNU GPL version 2 license, as can be read on
+http://www.gnu.org/licenses/gpl-2.0.html.
 """
 
 import datetime
