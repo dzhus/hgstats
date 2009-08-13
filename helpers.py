@@ -124,13 +124,16 @@ class RepoStream(StatStream):
     Filters which preserve change contexts must be derived from this
     class.
     """
-    def __init__(self, stream):
+    def __init__(self, stream, from_rev=0, to_rev=None):
         """
         Constructs new `RepoStream` instance by converting an existing
         Mercurial repository.
 
         `repo` must be a `mercurial.localrepo.localrepository`
         instance.
+
+        Only revisions with numbers `from_rev` through `to_rev` are
+        included in the stream.
 
         Iterating over the created instance will yield `CtxStatItem`
         objects with changeset dates for ``x`` and 1's for ``y``.
@@ -141,13 +144,17 @@ class RepoStream(StatStream):
         if not isinstance(stream, localrepository):
             raise IncompatibleInput("Can't create RepoStream from non-repo")
 
+        self.from_rev = from_rev
+        assert(to_rev < len(stream))
+        self.to_rev = to_rev or len(self.stream)-1
+
     def __iter__(self):
-        for rev in self.stream:
+        for rev in xrange(self.from_rev, self.to_rev + 1):
             ctx = self.stream[rev]
             yield CtxStatItem(ctx, x=ctx.date()[0], y=1)
 
     def __len__(self):
-        return len(self.stream)
+        return self.to_rev - self.from_rev + 1
 
     def __str__(self):
         return get_repo_name(self.stream)
@@ -294,7 +301,6 @@ class TagsFilter(RepoFilter, RepoStream):
         for item in self.stream:
             if item.ctx.tags() and not item.ctx.tags() == ['tip']:
                 yield item
-
 
 class DiffstatFilter(RepoFilter, RepoStream):
     """
