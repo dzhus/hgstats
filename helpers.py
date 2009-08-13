@@ -215,7 +215,7 @@ class StreamFilter():
         Recursively query filter sequence for string representations
         of its members, concatenating the result.
         """
-        return '%s:%s' % (str(self.stream), self.__name__)
+        return '%s:%s' % (str(self.stream), self.__class__.__name__)
 
 class RepoFilter(StreamFilter):
     """
