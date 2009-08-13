@@ -126,9 +126,6 @@ class CtxStatItem(StatItem):
         d['ctx'] = self.ctx
         return d
 
-    def __repr__(self):
-        return StatItem.__repr__(self) + ' # %s' % self.ctx.rev()
-
 ## Streams form sequences of StatItems
 
 class StatStream():
