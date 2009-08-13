@@ -215,7 +215,7 @@ class StreamFilter():
         Recursively query filter sequence for string representations
         of its members, concatenating the result.
         """
-        return '%s:%s' % (str(self.stream), self.__class__)
+        return '%s:%s' % (str(self.stream), self.__name__)
 
 class RepoFilter(StreamFilter):
     """
@@ -429,7 +429,7 @@ def header_line(repo, stream):
 
 def write_stats(repo, stream, file_name=None, append=None, line_sep='\n'):
     if not file_name:
-        file_name = "stats-%s-%s" % (get_repo_name(repo), stream)
+        file_name = "stats-%s" % stream
     stats_file = open(file_name, append and 'a+' or 'w')
     stats_file.write(header_line(repo, stream) + line_sep)
     # I don't use writelines intentionally
