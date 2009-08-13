@@ -296,7 +296,7 @@ class TagsFilter(RepoFilter, RepoStream):
                 yield item
 
 
-class DiffstatFilter(RepoFilter, StatStream):
+class DiffstatFilter(RepoFilter, RepoStream):
     """
     Sets diffstat results as ``y`` values.
     """
