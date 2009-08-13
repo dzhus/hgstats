@@ -216,7 +216,8 @@ class GroupingFilter(RepoFilter, RepoStream):
         specified with `resolution` (in days).
 
         Iterating over the created instance will yield `StatItem`
-        objects with ``y`` attributes set to groups sizes.
+        objects with ``y`` attributes set to sum of all ``y`` in
+        group.
 
         `relax_days` is a beat relaxation time (in days). Original
         stream item will be included in a group if its datetime is not
@@ -225,11 +226,14 @@ class GroupingFilter(RepoFilter, RepoStream):
 
         ---[-------resolution=10-------]---
         ---[-----------[-relax_days=5-]]---
-        ---[--o---o-----x--xxx--x------]---
+        ---[--o---o-----*--***--*------]---
 
-        Here only ``x`` commits will be included in the group, which
-        means that corresponding item in output stream will gain 5 as
-        ``y`` value.
+        Here only ``*`` items will be included in the group. ``y`` of
+        the corresponding item in output stream is a sum of all ``y``
+        values in the group of ``*``.
+
+        ``x`` is set to the time when time frame ended (in Epoch
+        seconds).
 
         Note that contexts are preserved only for the latest items of
         each group.
@@ -275,7 +279,8 @@ class GroupingFilter(RepoFilter, RepoStream):
 
             # Upcoming chunk occured, flushing collected group
             # This function should accept arbitary spangrouping function
-            yield StatItem(x=cur_date.strftime('%s'), y=len(group))
+            yield StatItem(x=cur_date.strftime('%s'),\
+                           y=sum(map(lambda i: i.y, group)))
 
             cur_date += delta
 
