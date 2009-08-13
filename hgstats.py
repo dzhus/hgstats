@@ -5,20 +5,6 @@ Description
 
 This script gathers statistics in Mercurial repositories.
 
-Tested with Mercurial 1.1
-
-How to use it
-=============
-
-How does hgstats process data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+-------------+   +-----------+   +----------+
-|   Source    +---+  Filter   +---+  Output  |
-+-------------+   +-----------+   +----------+
-
-Select generators, filters and output methods using `-s`, `-f` and
-`-o` command line options.
-
 Author and licensing
 ====================
 
@@ -37,46 +23,51 @@ from mercurial import hg, ui
 from mercurial.error import RepoError
 from mercurial.i18n import _
 
-from helpers import RepoStream, GroupingFilter, print_stats
+from helpers import *
 
 def print_usage():
-    print _("Usage: ./foostats.py [PATH1 [PATH2 [..]]]")
-    
-def make_repo_stats(repo):
-    stream = (RepoStream(repo))
-    return stream
+    print _("Usage: ./foostats.py PATH1 [PATH2 [..]]")
 
-def process_repos(repo_list):
+def process_repo(repo, write=False):
     """
-    Given a list of repos, gather stats for each of them and output
-    data using `output_method`.
+    Process `repo` statistics and print the result.
     """
-    for repo in repo_list:
-        print_stats(repo, make_repo_stats(repo))
-        print "\n\n",
+    s = AccFilter(RepoStream(repo))
+    if not write:
+        print_stats(repo, s)
+    else:
+        # TODO
+        write_stats(repo, s)
 
-def get_repo(repo_path):
-    """Get repository by its URL or False if it doesn't exist."""
-    try:
-        repo = hg.repository(ui.ui(), repo_path)
-    except RepoError, err:
-        repo = False
-    return repo
-
+def try_repo_path(path):
+    """
+    Return repository at `path` or print log message if it's not
+    available or non-local.
+    """
+    def get_repo(path):
+        """
+        Return repository at `repo_path` or False if it doesn't exist.
+        """
+        try:
+            repo = hg.repository(ui.ui(), path)
+        except RepoError, err:
+            repo = False
+        return repo
+    repo = get_repo(path)
+    if not repo:
+        print 'Could not find valid repo %s, ignored' % path
+        return False
+    elif not repo.local():
+        print 'Non-local repo %s, ignored' % path
+        return False
+    else:
+        return repo
+        
 def run_stats(path_list):
-    def ignore_bad(path):
-        repo = get_repo(path)
-        if not repo:
-            print 'Could not find valid repo %s, ignored' % path
-            return False
-        elif not repo.local():
-            print 'Non-local repo %s, ignored' % path
-            return False
-        else:
-            return repo
     # We process only good repositories
-    repo_list = filter(None, map(ignore_bad, path_list))
-    process_repos(repo_list)
+    repo_list = filter(None, map(try_repo_path, path_list))
+    for repo in repo_list:
+        process_repo(repo)
 
 if __name__ == '__main__':
     run_stats(sys.argv[1:])

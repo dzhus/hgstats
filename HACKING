@@ -1,0 +1,48 @@
+-*- mode: org -*-
+
+* PIPESPEC syntax
+  PIPESPEC describes a sequence of filters to be applied to
+  repositories.
+
+** Rationale
+   PIPESPEC syntax must meet the following requirements:
+   
+   - we want to easily write pipespecs by hand;
+   - parsing must be simple;
+   - do not allow anything tricky;
+   - don't collide with shell syntax conventions.
+     
+** Current version
+   Colon-separated list of filters sets the order of filter
+   application. When just filter name is used, it's implied that the
+   result of pipe-spec part to the left of colon is used for `stream`
+   argument of filter. RepoStream for current repository is used for
+   the first filter.
+
+   : :DiffstatFilter:AccFilter,
+
+   The expression above roughly expands to:
+
+   : AccFilter(DiffstatFilter(RepoStream(repo)))
+
+   Additional filter arguments are specified just like in function
+   calls but with `stream` argument omitted (because it's [[implied]]).
+   Only numeric, string or boolean (True/False) values are allowed
+   (don't be [[tricky]]).
+   
+   : :DiffstatFilter(True):GroupingFilter(15,30):AccFilter
+
+   expands to
+
+   : AccFilter(GroupingFilter(DiffstatFilter(RepoStream(repo), True), 15, 30))
+
+* CLI
+
+** TODO Add -w/-o options
+   
+   | Option | Method used for output       |
+   | o      | file:helpers.py::print_stats |
+   | w      | file:helpers.py::write_stats |
+
+** TODO Implement [[PIPESPEC]] parsing
+
