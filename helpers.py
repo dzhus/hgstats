@@ -1,15 +1,46 @@
+"""
+Description
+===========
+
+This module contains classes and helper functions which allow
+gathering various statistics about Mercurial repositories by combining
+various filters in a pipe-like manner.
+
+Start with any local Mercurial repository at your disposal:
+
+>>> from mercurial import hg, ui
+>>> repo = hg.repository(ui.ui(), '/home/sphinx/projects/hgstats')
+
+Convert your repository to a *stream* of items by using `RepoStream`:
+
+>>> s = RepoStream(repo)
+
+Iterating over stream produces `CtxStatItem` or `StatItem` objects.
+Their attributes of interest are ``x`` and ``y``, which may be used to
+plot data.
+
+Now you can apply various filters to your stream:
+
+>>> s_f = AccFilter(DiffstatFilter(s))
+
+Some filters accept extra parameters in addition to stream for
+processing.
+
+Iterate over filtered streams for further data processing.
+
+Author and licensing
+====================
+
+Copyright (C) 2009 Dmitry Dzhus <dima@sphinx.net.ru>
+
+This package is subject to GNU GPL version 3 license, as can be read
+on http://www.gnu.org/licenses/gpl-2.0.html.
+"""
+
 import datetime
 
 from mercurial.localrepo import localrepository
 from mercurial import patch
-
-"""
-Streams, filters and output methods for hgstats.
-
-Copyright (C) 2009 Dmitry Dzhus <dima@sphinx.net.ru>
-
-This code is subject to GNU General Public License version 2
-"""
 
 ## Exceptions
 
@@ -414,3 +445,7 @@ def print_stats(repo, stream, line_sep='\n'):
     print header_line(repo, stream)
     for item in stream:
         print make_stats_line(item),
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
