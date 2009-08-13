@@ -430,7 +430,7 @@ def get_repo_name(repo):
 def header_line(repo, stream):
     return "# Stats for %s from %s" % (get_repo_name(repo), stream)
 
-def write_stats(repo, stream, file_name=None, append=None, line_sep='\n', field_sep='\t'):
+def write_stats(repo, stream, file_name=None, append=None, line_sep='\n'):
     if not file_name:
         file_name = "stats-%s-%s" % (get_repo_name(repo), stream)
     stats_file = open(file_name, append and 'a+' or 'w')
