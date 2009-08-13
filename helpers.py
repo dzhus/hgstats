@@ -44,13 +44,16 @@ from mercurial import patch
 
 ## Exceptions
 
-class IncompatibleInput(BaseException):
+class Error(Exception):
     pass
 
-class IncompatibleFilter(BaseException):
+class IncompatibleInput(Error):
     pass
 
-class UnsyncedStreams(BaseException):
+class IncompatibleFilter(Error):
+    pass
+
+class UnsyncedStreams(Error):
     pass
 
 ## Statistics items
