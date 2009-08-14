@@ -14,9 +14,7 @@ This code is subject to GNU General Public License version 2, as can
 be read on <http://www.gnu.org/licenses/gpl-2.0.html>.
 """
 
-import os
 import sys
-import getopt
 import datetime
 
 from mercurial import hg, ui
@@ -26,14 +24,7 @@ from mercurial.fancyopts import fancyopts
 
 from helpers import *
 from pipespec import parse_pipespec
-
-def dprint(msg):
-    if options['verbose']:
-        print >> sys.stderr, msg
-
-def print_usage():
-    print(_("Usage: ./foostats.py [OPTIONS] PATH1 [PATH2 [..]]"))
-
+    
 def process_repo(repo, filters, write=False):
     """
     Process `repo` statistics and print/write the result.
@@ -70,7 +61,16 @@ def try_repo_path(path):
         return False
     else:
         return repo
-        
+
+options = {}
+
+def dprint(msg):
+    if options['verbose']:
+        print >> sys.stderr, msg
+
+def print_usage():
+    print(_("Usage: ./foostats.py [OPTIONS] PATH1 [PATH2 [..]]"))
+
 optable = [
     ('p', 'pipespec', '', _('Colon-separated list of filter names to be applied to repo')),
     ('w', 'write', False, _('Write stats for each repository in separate file')),
@@ -78,7 +78,6 @@ optable = [
     ]
 
 if __name__ == '__main__':
-    options = {}
     path_list = fancyopts(sys.argv[1:], optable, options)
     filters = parse_pipespec(options['pipespec'])
     
