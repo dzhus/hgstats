@@ -24,12 +24,11 @@ from mercurial.error import RepoError
 from mercurial.i18n import _
 from mercurial.fancyopts import fancyopts
 
-from helpers import print_stats, write_stats, get_repo_name
-from helpers import STATS_BASENAME
+from helpers import get_repo_name
 from pipespec import parse_pipespec
 
-class UnknownOutputMethod(Exception):
-    pass
+from output import STATS_BASENAME
+from output import PrintOutput, FileOutput, GchartOutput
 
 def process_repo(repo, filters, method, combine):
     """
@@ -81,10 +80,16 @@ options = {}
 
 optable = [
     ('p', 'pipespec', '', _('Colon-separated list of filter names to be applied to repo')),
-    ('o', 'output', 'print', _('Output method (print/file)')),
-    ('c', 'combine', True, _('Combine results for all repositories in one file or gchart')),
+    ('o', 'output', 'print', _('Output method (print/file/gchart)')),
+    ('c', 'combine', False, _('Combine results for all repositories in one file or gchart')),
     ('v', 'verbose', False, _('More debugging output'))
     ]
+
+output_table = {
+    'print': PrintOutput,
+    'file': FileOutput,
+    'gchart': GchartOutput
+    }
 
 if __name__ == '__main__':
     try:
@@ -96,12 +101,8 @@ if __name__ == '__main__':
 
     # Process only good repositories
     repo_list = filter(None, map(try_repo_path, path_list))
-    if options['output'] == 'file' and options['combine']:
-        if os.access(STATS_BASENAME, os.F_OK & os.W_OK):
-            os.remove(STATS_BASENAME)
-            dprint('Removed file %s' % STATS_BASENAME)
     if repo_list:
-        for repo in repo_list:
-            process_repo(repo, filters, options['output'], options['combine'])
+        output = output_table[options['output']]
+        dprint(output(map(lambda r:(r, filters(r)), repo_list), options['combine'])())
     else:
         print_usage()
