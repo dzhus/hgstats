@@ -14,6 +14,7 @@ This code is subject to GNU General Public License version 2, as can
 be read on <http://www.gnu.org/licenses/gpl-2.0.html>.
 """
 
+import os
 import sys
 import datetime
 import getopt
@@ -24,20 +25,26 @@ from mercurial.i18n import _
 from mercurial.fancyopts import fancyopts
 
 from helpers import print_stats, write_stats, get_repo_name
+from helpers import STATS_BASENAME
 from pipespec import parse_pipespec
-    
-def process_repo(repo, filters, write=False):
+
+class UnknownOutputMethod(Exception):
+    pass
+
+def process_repo(repo, filters, method, combine):
     """
     Process `repo` statistics and print/write the result.
     """
     s = filters(repo)
     dprint('Processing %s...' % repo.root)
-    if not write:
+    if method == 'print':
         print_stats(repo, s)
         print "\n"
+    elif method == 'file':
+        file = write_stats(repo, s, combine and STATS_BASENAME or None, combine)
+        dprint('Wrote to file %s' % file)
     else:
-        file = write_stats(repo, s)
-        dprint('Wrote file %s' % file)
+        raise UnknownOutputMethod
 
 def try_repo_path(path):
     """
@@ -63,8 +70,6 @@ def try_repo_path(path):
     else:
         return repo
 
-options = {}
-
 def dprint(msg):
     if options['verbose']:
         print >> sys.stderr, msg
@@ -72,9 +77,12 @@ def dprint(msg):
 def print_usage():
     print(_("Usage: ./foostats.py [OPTIONS] PATH1 [PATH2 [..]]"))
 
+options = {}
+
 optable = [
     ('p', 'pipespec', '', _('Colon-separated list of filter names to be applied to repo')),
-    ('w', 'write', False, _('Write stats for each repository in separate file')),
+    ('o', 'output', 'print', _('Output method (print/file)')),
+    ('c', 'combine', True, _('Combine results for all repositories in one file or gchart')),
     ('v', 'verbose', False, _('More debugging output'))
     ]
 
@@ -85,11 +93,15 @@ if __name__ == '__main__':
         print_usage()
         exit()
     filters = parse_pipespec(options['pipespec'])
-    
+
     # Process only good repositories
     repo_list = filter(None, map(try_repo_path, path_list))
+    if options['output'] == 'file' and options['combine']:
+        if os.access(STATS_BASENAME, os.F_OK & os.W_OK):
+            os.remove(STATS_BASENAME)
+            dprint('Removed file %s' % STATS_BASENAME)
     if repo_list:
         for repo in repo_list:
-            process_repo(repo, filters, options['write'])
+            process_repo(repo, filters, options['output'], options['combine'])
     else:
         print_usage()
