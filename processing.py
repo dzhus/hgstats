@@ -318,7 +318,7 @@ class GroupingFilter(RepoFilter, RepoStream):
             group = filter(not_too_old(cur_date, relax_period), group)
 
             # Upcoming chunk occured, flushing collected group
-            yield StatItem(x=cur_date.strftime('%s'),\
+            yield StatItem(x=int(cur_date.strftime('%s')), \
                            y=sum(map(lambda i: i.y, group)))
             cur_date += delta
             # Snap to datemax to prevent skipping items from the last
