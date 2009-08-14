@@ -17,8 +17,8 @@ http://www.gnu.org/licenses/gpl-2.0.html.
 
 import shlex
 
-from helpers import RepoStream
-from helpers import GroupingFilter, AccFilter, TagsFilter, DiffstatFilter
+from processing import RepoStream
+from processing import GroupingFilter, AccFilter, TagsFilter, DiffstatFilter
 
 symtable = {
     'AccFilter': AccFilter,
