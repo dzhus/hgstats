@@ -283,7 +283,7 @@ class GroupingFilter(RepoFilter, RepoStream):
     def __iter__(self):
         def not_too_old(up_to, delta):
             """Make *filter* which will return True only for contexts
-            which are no earlier than `up_to-date_delta`"""
+            which are no earlier than `up_to-delta`"""
             def test(ctx):
                 return ctx.datetime > (up_to - delta)
             return test
@@ -303,7 +303,7 @@ class GroupingFilter(RepoFilter, RepoStream):
         relax_period = datetime.timedelta(self.relax_days)
 
         group = []
-        while cur_date < datemax:
+        while cur_date <= datemax:
             # Collect new items
             while item.datetime < cur_date:
                 group.append(item)
@@ -316,11 +316,14 @@ class GroupingFilter(RepoFilter, RepoStream):
             group = filter(not_too_old(cur_date, relax_period), group)
 
             # Upcoming chunk occured, flushing collected group
-            # This function should accept arbitary spangrouping function
             yield StatItem(x=cur_date.strftime('%s'),\
                            y=sum(map(lambda i: i.y, group)))
-
             cur_date += delta
+            # Snap to datemax to prevent skipping items from the last
+            # group
+            if cur_date > datemax and cur_date < datemax + delta:
+                cur_date = datemax
+            
 
 class TagsFilter(RepoFilter, RepoStream):
     """
