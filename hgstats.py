@@ -16,6 +16,7 @@ be read on <http://www.gnu.org/licenses/gpl-2.0.html>.
 
 import sys
 import datetime
+import getopt
 
 from mercurial import hg, ui
 from mercurial.error import RepoError
@@ -78,7 +79,11 @@ optable = [
     ]
 
 if __name__ == '__main__':
-    path_list = fancyopts(sys.argv[1:], optable, options)
+    try:
+        path_list = fancyopts(sys.argv[1:], optable, options)
+    except getopt.GetoptError:
+        print_usage()
+        exit()
     filters = parse_pipespec(options['pipespec'])
     
     # Process only good repositories
