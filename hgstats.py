@@ -22,7 +22,7 @@ from mercurial.error import RepoError
 from mercurial.i18n import _
 from mercurial.fancyopts import fancyopts
 
-from helpers import *
+from helpers import print_stats, write_stats, get_repo_name
 from pipespec import parse_pipespec
     
 def process_repo(repo, filters, write=False):
@@ -83,5 +83,8 @@ if __name__ == '__main__':
     
     # Process only good repositories
     repo_list = filter(None, map(try_repo_path, path_list))
-    for repo in repo_list:
-        process_repo(repo, filters, options['write'])
+    if repo_list:
+        for repo in repo_list:
+            process_repo(repo, filters, options['write'])
+    else:
+        print_usage()
