@@ -22,22 +22,30 @@ import datetime
 from mercurial import hg, ui
 from mercurial.error import RepoError
 from mercurial.i18n import _
+from mercurial.fancyopts import fancyopts
 
 from helpers import *
+from pipespec import parse_pipespec
+
+def dprint(msg):
+    if options['verbose']:
+        print >> sys.stderr, msg
 
 def print_usage():
-    print _("Usage: ./foostats.py PATH1 [PATH2 [..]]")
+    print(_("Usage: ./foostats.py [OPTIONS] PATH1 [PATH2 [..]]"))
 
-def process_repo(repo, write=False):
+def process_repo(repo, filters, write=False):
     """
-    Process `repo` statistics and print the result.
+    Process `repo` statistics and print/write the result.
     """
-    s = AccFilter(RepoStream(repo))
+    s = filters(repo)
+    dprint('Processing %s...' % repo.root)
     if not write:
         print_stats(repo, s)
+        print "\n"
     else:
-        # TODO
-        write_stats(repo, s)
+        file = write_stats(repo, s)
+        dprint('Wrote file %s' % file)
 
 def try_repo_path(path):
     """
@@ -55,19 +63,26 @@ def try_repo_path(path):
         return repo
     repo = get_repo(path)
     if not repo:
-        print 'Could not find valid repo %s, ignored' % path
+        dprint('Could not find valid repo %s, ignored' % path)
         return False
     elif not repo.local():
-        print 'Non-local repo %s, ignored' % path
+        dprint('Non-local repo %s, ignored' % path)
         return False
     else:
         return repo
         
-def run_stats(path_list):
-    # We process only good repositories
-    repo_list = filter(None, map(try_repo_path, path_list))
-    for repo in repo_list:
-        process_repo(repo)
+optable = [
+    ('p', 'pipespec', '', _('Colon-separated list of filter names to be applied to repo')),
+    ('w', 'write', False, _('Write stats for each repository in separate file')),
+    ('v', 'verbose', False, _('More debugging output'))
+    ]
 
 if __name__ == '__main__':
-    run_stats(sys.argv[1:])
+    options = {}
+    path_list = fancyopts(sys.argv[1:], optable, options)
+    filters = parse_pipespec(options['pipespec'])
+    
+    # Process only good repositories
+    repo_list = filter(None, map(try_repo_path, path_list))
+    for repo in repo_list:
+        process_repo(repo, filters, options['write'])

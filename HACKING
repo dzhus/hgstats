@@ -38,11 +38,12 @@
 
 * CLI
 
-** TODO Add -w/-o options
+** IN PROGRESS Add -w/-o options
    
    | Option | Method used for output       |
    | o      | file:helpers.py::print_stats |
    | w      | file:helpers.py::write_stats |
 
-** TODO Implement [[PIPESPEC]] parsing
+** DONE Implement [[PIPESPEC]] parsing
+   CLOSED: [2009-08-14 Птн 19:59]
 
