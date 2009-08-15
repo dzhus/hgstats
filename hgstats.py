@@ -79,7 +79,7 @@ def print_usage():
 options = {}
 
 optable = [
-    ('p', 'pipespec', '', _('Colon-separated list of filter names to be applied to repo')),
+    ('p', 'pipespec', '', _('Dash-separated list of filter names to be applied to repo')),
     ('o', 'output', 'print', _('Output method (print/file/gchart)')),
     ('c', 'combine', False, _('Combine results for all repositories in one file or gchart')),
     ('v', 'verbose', False, _('More debugging output'))

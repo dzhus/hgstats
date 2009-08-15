@@ -3,7 +3,7 @@ Description
 ===========
 
 This module provides `parse_pipespec` function which translates
-textual description of filter sequence from to function which applies
+textual description of filter sequence to function which applies
 descibed filters to `mercurial.localrepository` objects.
 
 Author and licensing
@@ -120,8 +120,8 @@ def parse_pipespec(pipespec):
     applications as described in `pipespec` string.
     """
     shlex_obj = shlex.shlex(pipespec)
-    # We just ignore all colons
-    shlex_obj.whitespace += ':'
+    # We just ignore all dashes
+    shlex_obj.whitespace += '-'
     return _read_pipespec(shlex_obj, RepoStream)
 
 if __name__ == "__main__":

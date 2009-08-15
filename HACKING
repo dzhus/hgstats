@@ -13,13 +13,13 @@
    - don't collide with shell syntax conventions.
      
 ** Current version
-   Colon-separated list of filters sets the order of filter
+   Dash-separated list of filters sets the order of filter
    application. When just filter name is used, it's implied that the
-   result of pipe-spec part to the left of colon is used for `stream`
+   result of pipe-spec part to the left of dash is used for `stream`
    argument of filter. RepoStream for current repository is used for
    the first filter.
 
-   : DiffstatFilter:AccFilter,
+   : DiffstatFilter-AccFilter,
 
    The expression above roughly expands to:
 
@@ -30,7 +30,7 @@
    Only numeric, string or boolean (True/False) values are allowed
    (don't be [[tricky]]).
    
-   : DiffstatFilter(True):GroupingFilter(15,30):AccFilter
+   : DiffstatFilter(True)-GroupingFilter(15,30)-AccFilter
 
    expands to
 
