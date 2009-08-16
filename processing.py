@@ -245,7 +245,7 @@ class AccFilter(StreamFilter, StatStream):
             # otherwise
             yield item.child(y = acc, y_label=None)
         
-class GroupingFilter(RepoFilter, RepoStream):
+class GroupingFilter(RepoFilter, StatStream):
     """
     Combines changesets from `RepoStream` in groups by dates.
     """
