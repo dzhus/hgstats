@@ -38,12 +38,23 @@
 
 * CLI
 
-** IN PROGRESS Add -w/-o options
+** DONE --output option
+   CLOSED: [2009-08-16 Вск 13:22]
    
-   | Option | Method used for output       |
-   | o      | file:helpers.py::print_stats |
-   | w      | file:helpers.py::write_stats |
+   | Value  | Method used for output       |
+   | print  | file:output.py::PrintOutput  |
+   | gchart | file:output.py::GchartOutput |
+   | file   | file:output.py::FileOutput   |
 
 ** DONE Implement [[PIPESPEC]] parsing
    CLOSED: [2009-08-14 Птн 19:59]
 
+
+* TODO Type checking
+  Our filter types heirarchy is not flexible enough.
+
+  AccFilter does not in fact produce a `StatStream`, but a stream of
+  the same type as was used for filter input. Due to `AccFilter` being
+  currently inherited from `StatStream`, it's impossible to apply a
+  `TagsFilter` after it. Inheriting `AccFilter` from `RepoStream`
+  would be wrong as well.
