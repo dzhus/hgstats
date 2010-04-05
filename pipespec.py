@@ -119,7 +119,7 @@ def parse_pipespec(pipespec):
     Return a function, which performs a sequence of filter
     applications as described in `pipespec` string.
 
-    Pipespec is a colon-separated list of compatible filters to be
+    Pipespec is a dash-separated list of compatible filters to be
     applied to repository.
 
     Available filters are listed in `symtable`.
