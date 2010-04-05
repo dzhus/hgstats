@@ -9,7 +9,7 @@ descibed filters to `mercurial.localrepository` objects.
 Author and licensing
 ====================
 
-Copyright (C) 2009 Dmitry Dzhus <dima@sphinx.net.ru>
+Copyright (C) 2009, 2010 Dmitry Dzhus <dima@sphinx.net.ru>
 
 This code is subject to GNU GPL version 2 license, as can be read on
 http://www.gnu.org/licenses/gpl-2.0.html.
@@ -106,7 +106,7 @@ def _read_filter(shlex_obj):
 def _read_pipespec(shlex_obj, filters):
     """
     Read next filter description from `shlex_obj` and compose it with
-    `filters`.
+    `filters` function.
     """
     cur_filter = _read_filter(shlex_obj)
     if cur_filter:
@@ -118,6 +118,11 @@ def parse_pipespec(pipespec):
     """
     Return a function, which performs a sequence of filter
     applications as described in `pipespec` string.
+
+    Pipespec is a colon-separated list of compatible filters to be
+    applied to repository.
+
+    Available filters are listed in `symtable`.
     """
     shlex_obj = shlex.shlex(pipespec)
     # We just ignore all dashes
