@@ -58,3 +58,13 @@
   currently inherited from `StatStream`, it's impossible to apply a
   `TagsFilter` after it. Inheriting `AccFilter` from `RepoStream`
   would be wrong as well.
+
+* TODO Web interface
+
+* TODO New filters
+  - cut by date
+  - run external programs
+  - filter by authors
+
+* Discussions
+  - gnus:gmane.comp.version-control.mercurial.general#87tyrpr2ef.fsf@sphinx.net.ru
