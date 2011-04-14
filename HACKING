@@ -61,6 +61,8 @@
 
 * TODO Web interface
 
+  Graphs may be done using http://code.google.com/p/flot/.
+
 * TODO New filters
   - cut by date
   - run external programs
